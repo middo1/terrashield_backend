@@ -31,6 +31,22 @@ DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
+# Render (and most PaaS hosts) terminate HTTPS at a proxy in front of the app,
+# then forward the request to gunicorn as plain HTTP. Without the two settings
+# below, Django doesn't realize the original request was HTTPS — which breaks
+# CSRF validation on session-based logins like /admin (shows up as a bad
+# request on POST). This tells Django to trust the proxy's header.
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_HOST = True
+
+# CSRF needs to know the real origin(s) it'll be POSTed from, including
+# scheme. Add your Render URL (and any custom domain) here, comma-separated,
+# via the CSRF_TRUSTED_ORIGINS env var — e.g.
+# "https://your-app.onrender.com,https://terrashield.yourdomain.com".
+CSRF_TRUSTED_ORIGINS = [
+    origin for origin in os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',') if origin
+]
+
 # The frontend's origin(s). Set this to your real dev/prod frontend URL(s)
 # via the CORS_ALLOWED_ORIGINS env var, comma-separated
 # (e.g. "http://localhost:3000,https://terrashield-app.vercel.app").
