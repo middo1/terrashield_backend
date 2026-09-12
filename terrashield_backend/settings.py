@@ -47,6 +47,37 @@ CSRF_TRUSTED_ORIGINS = [
     origin for origin in os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',') if origin
 ]
 
+# Without this, Django's default logging config only emails admins on
+# errors (which isn't set up here) — nothing reaches stdout, so Render's
+# log tab shows nothing even when requests are failing. This sends
+# warnings and errors (including ALLOWED_HOSTS / CSRF rejections) to
+# stdout, where Render's Logs tab picks them up.
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        'django.request': {
+            'handlers': ['console'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        'django.security': {
+            'handlers': ['console'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+    },
+}
+
 # The frontend's origin(s). Set this to your real dev/prod frontend URL(s)
 # via the CORS_ALLOWED_ORIGINS env var, comma-separated
 # (e.g. "http://localhost:3000,https://terrashield-app.vercel.app").

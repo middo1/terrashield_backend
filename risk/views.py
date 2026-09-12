@@ -81,3 +81,33 @@ class RiskAssessView(APIView):
 
         response_serializer = RiskAssessResponseSerializer(result)
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+
+
+class DebugInfoView(APIView):
+    """
+    GET /debug-info — TEMPORARY diagnostic endpoint.
+
+    Shows what host/protocol the server actually sees on this request
+    versus what it's configured to accept, so a "Bad Request" caused by
+    an ALLOWED_HOSTS or CSRF/proxy mismatch can be pinpointed in one
+    request instead of guessing from empty logs.
+
+    No secrets are exposed here (no SECRET_KEY, no DB credentials) — but
+    remove this view/route once the deployment issue is resolved, since
+    it's still more configuration detail than a public app should expose.
+    """
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        from django.conf import settings as dj_settings
+        return Response({
+            'request_host_header': request.META.get('HTTP_HOST'),
+            'request_get_host_result': request.get_host(),
+            'x_forwarded_proto': request.META.get('HTTP_X_FORWARDED_PROTO'),
+            'x_forwarded_host': request.META.get('HTTP_X_FORWARDED_HOST'),
+            'is_secure': request.is_secure(),
+            'configured_allowed_hosts': dj_settings.ALLOWED_HOSTS,
+            'configured_csrf_trusted_origins': dj_settings.CSRF_TRUSTED_ORIGINS,
+            'configured_cors_allowed_origins': dj_settings.CORS_ALLOWED_ORIGINS,
+            'debug_mode': dj_settings.DEBUG,
+        })

@@ -8,4 +8,5 @@ urlpatterns = [
     path('segments', views.SegmentListView.as_view(), name='segment-list'),
     path('segments/<int:pk>', views.SegmentDetailView.as_view(), name='segment-detail'),
     path('risk-assess', views.RiskAssessView.as_view(), name='risk-assess'),
+    path('debug-info', views.DebugInfoView.as_view(), name='debug-info'),
 ]
