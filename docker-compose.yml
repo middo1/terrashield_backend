@@ -1,0 +1,25 @@
+# Local Postgres that mirrors what Render provides in production.
+# This exists specifically so local testing catches DB-config problems
+# (like falling back to sqlite unnoticed) before they reach Render.
+#
+# Usage:
+#   docker compose up -d
+#   export DATABASE_URL=postgresql://terrashield:terrashield@localhost:5432/terrashield
+#   python manage.py migrate
+#   python manage.py runserver
+
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: terrashield
+      POSTGRES_PASSWORD: terrashield
+      POSTGRES_DB: terrashield
+    ports:
+      - "5432:5432"
+    volumes:
+      - terrashield_pgdata:/var/lib/postgresql/data
+
+volumes:
+  terrashield_pgdata:

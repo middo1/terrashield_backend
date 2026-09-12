@@ -100,6 +100,17 @@ class DebugInfoView(APIView):
 
     def get(self, request):
         from django.conf import settings as dj_settings
+        from django.contrib.auth.models import User
+
+        db_config = dj_settings.DATABASES.get('default', {})
+
+        db_check = {'ok': True, 'user_count': None, 'error': None}
+        try:
+            db_check['user_count'] = User.objects.count()
+        except Exception as exc:
+            db_check['ok'] = False
+            db_check['error'] = f'{exc.__class__.__name__}: {exc}'
+
         return Response({
             'request_host_header': request.META.get('HTTP_HOST'),
             'request_get_host_result': request.get_host(),
@@ -110,4 +121,8 @@ class DebugInfoView(APIView):
             'configured_csrf_trusted_origins': dj_settings.CSRF_TRUSTED_ORIGINS,
             'configured_cors_allowed_origins': dj_settings.CORS_ALLOWED_ORIGINS,
             'debug_mode': dj_settings.DEBUG,
+            'database_engine': db_config.get('ENGINE'),
+            'database_name': str(db_config.get('NAME', ''))[:60],
+            'database_host': db_config.get('HOST') or None,
+            'database_check': db_check,
         })
