@@ -1,6 +1,6 @@
 # TerraShield API Contract — MVP
 
-Base URL (local dev): `http://127.0.0.1:8000`
+Base URL: `https://terrashield-backend.onrender.com` (local dev: `http://127.0.0.1:8000`)
 
 ## Auth
 Every endpoint except `/login` requires a token in the header:
