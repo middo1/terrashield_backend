@@ -30,11 +30,13 @@ something's broken. Every request after that is fast.
 ```js
 const BASE_URL = 'https://terrashield-backend.onrender.com';
 
-async function login(username, password) {
+async function login(email, password) {
+  // Note: the login field is labeled "Email" in the mockup but the API
+  // takes it as `username` — no separate email-auth system in the MVP.
   const res = await fetch(`${BASE_URL}/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password }),
+    body: JSON.stringify({ username: email, password }),
   });
   if (!res.ok) {
     const { error } = await res.json();
@@ -54,7 +56,32 @@ async function getDashboard(token) {
   }
   return res.json();
 }
+
+// Segment Details page -> "Run AI Assessment" button
+async function runRiskAssessment(token, segment) {
+  const res = await fetch(`${BASE_URL}/risk-assess`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Token ${token}`,
+    },
+    body: JSON.stringify({
+      pipeline_id: segment.pipelineId,       // e.g. "PL-05" — NOT the combined "PL-05-SG-12"
+      segment_code: segment.segmentCode,     // e.g. "SG-12"
+      latitude: segment.latitude,
+      longitude: segment.longitude,
+      environmental_data: segment.environmentalData,
+      incident_history: segment.incidents.map(i => ({ type: i.type, date: i.date })),
+    }),
+  });
+  if (!res.ok) {
+    const { error } = await res.json();
+    throw new Error(error.message);
+  }
+  return res.json(); // { segment_id, risk_score, risk_level, explanation, contributing_factors, recommendation }
+}
 ```
+**Important:** `pipeline_id` and `segment_code` in the `/risk-assess` request are the *short, separate* codes (`"PL-05"` + `"SG-12"`) — not the combined `"PL-05-SG-12"` id shown everywhere in the UI. If your Segment Details screen only has the combined id, split it on the first `-` after the pipeline number, or better — keep `pipeline_id` and `segment_code` as separate fields in your segment data model from the start, since `GET /segments/{id}` gives you `pipeline.code` and can be paired with the segment's own short code.
 
 ## 4. Error handling — one shape, everywhere
 Every non-2xx response looks like this:
@@ -77,7 +104,7 @@ rather than parsing each endpoint's failure differently.
 |---|---|---|---|
 | `/login` | POST | No | Get a token |
 | `/dashboard` | GET | Yes | Summary stats for the dashboard |
-| `/segments` | GET | Yes | List all pipeline segments |
+| `/segments` | GET | Yes | List all pipeline segments — supports `?search=` and `?risk_level=High\|Medium\|Low` |
 | `/segments/{id}` | GET | Yes | Full detail on one segment |
 | `/risk-assess` | POST | Yes | Submit a segment, get back a risk assessment |
 

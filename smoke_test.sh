@@ -45,7 +45,7 @@ check "bad login returns 401" "401" "$BAD_CODE"
 echo -e "\n[3] POST /risk-assess"
 RA_RESP=$(curl -s -w "\n%{http_code}" -X POST "$BASE_URL/risk-assess" \
   -H "Content-Type: application/json" -H "Authorization: Token $TOKEN" \
-  -d '{"segment_code":"PL-05-SG-12","latitude":6.34,"longitude":5.62,"environmental_data":{"corrosion_risk":true,"soil_moisture":true}}')
+  -d '{"pipeline_id":"PL-05","segment_code":"SG-12","latitude":4.815,"longitude":7.049,"environmental_data":{"elevation":18,"flood_risk":"High"},"incident_history":[{"type":"Vandalism","date":"2026-03-12"}]}')
 RA_CODE=$(echo "$RA_RESP" | tail -1)
 RA_BODY=$(echo "$RA_RESP" | sed '$d')
 check "risk-assess returns 201" "201" "$RA_CODE"

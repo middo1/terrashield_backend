@@ -46,11 +46,20 @@ class DashboardView(APIView):
 
 
 class SegmentListView(APIView):
-    """GET /segments — list pipeline segments."""
+    """
+    GET /segments — list pipeline segments.
+
+    Query params:
+        ?search=<text>       matches segment code or pipeline name/code
+        ?risk_level=<level>  filters by latest risk level (High/Medium/Low)
+    """
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        segments = PipelineSegment.objects.select_related('pipeline').all()
+        segments = services.get_segment_queryset(
+            search=request.query_params.get('search', ''),
+            risk_level=request.query_params.get('risk_level', ''),
+        )
         serializer = PipelineSegmentListSerializer(segments, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
